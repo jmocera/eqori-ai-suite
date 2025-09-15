@@ -22,11 +22,15 @@ origins = [
     "https://*.onrender.com", # Render domains
 ]
 
-# Allow all origins for development/demo purposes
-# In production, specify exact origins above
+# Allow specific origins for production deployment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",  # React dev server
+        "http://localhost:80",    # Local production
+        "https://eqori-frontend.onrender.com",  # Production frontend
+        "https://eqori-ai-suite.onrender.com",  # Backend self-reference
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
