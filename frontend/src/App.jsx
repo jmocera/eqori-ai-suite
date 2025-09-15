@@ -1,96 +1,102 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+
+// Components
 import Header from './components/Layout/Header';
+
+// Pages
 import Home from './pages/Home';
-import Login from './components/Auth/Login';
-import Register from './components/Auth/Register';
 import Dashboard from './pages/Dashboard';
 import History from './pages/History';
-import './App.css';
+import Login from './components/Auth/Login';
+import Register from './components/Auth/Register';
 
-// Protected Route component
+// Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
+  const { user, loading } = useAuth();
+
   if (loading) {
     return (
-      <div className="loading">
-        <span className="spinner"></span>
-        Loading...
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+        <div className="loading-spinner"></div>
       </div>
     );
   }
-  
-  return isAuthenticated ? children : <Navigate to="/login" />;
+
+  return user ? children : <Navigate to="/login" replace />;
 };
 
-// Public Route component (redirect to dashboard if authenticated)
+// Public Route wrapper (redirect to dashboard if already authenticated)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
+  const { user, loading } = useAuth();
+
   if (loading) {
     return (
-      <div className="loading">
-        <span className="spinner"></span>
-        Loading...
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+        <div className="loading-spinner"></div>
       </div>
     );
   }
-  
-  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
+
+  return !user ? children : <Navigate to="/dashboard" replace />;
 };
 
-const AppContent = () => {
+function AppContent() {
   return (
-    <div className="App">
-      <Header />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route 
-          path="/login" 
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/register" 
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/history" 
-          element={
-            <ProtectedRoute>
-              <History />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </div>
+    <Router>
+      <div className="App">
+        <Header />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <History />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Fallback route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </Router>
   );
-};
+}
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <AppContent />
     </AuthProvider>
   );
 }

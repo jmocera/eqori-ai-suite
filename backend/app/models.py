@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -8,7 +8,9 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     generations = relationship("Generation", back_populates="user")
@@ -19,15 +21,16 @@ class Generation(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     product_name = Column(String, nullable=False)
-    product_category = Column(String, nullable=False)
-    input_features = Column(Text)
-    input_audience = Column(String)
-    input_tone = Column(String)
-    input_keywords = Column(Text)
-    generated_description = Column(Text)
-    generated_ad_copy = Column(Text)  # JSON string for array of ad copies
-    generated_email_blurb = Column(Text)
-    is_favorite = Column(Boolean, default=False)
+    category = Column(String)
+    features = Column(Text)
+    target_audience = Column(String)
+    tone_of_voice = Column(String)
+    seo_keywords = Column(Text)
+    product_description = Column(Text)
+    social_media_ads = Column(Text)
+    email_content = Column(Text)
+    is_favorited = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("User", back_populates="generations")

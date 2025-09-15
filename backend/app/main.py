@@ -1,39 +1,44 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import engine
-from . import models
+from sqlalchemy import create_engine
+import os
+from dotenv import load_dotenv
+
+from .database import engine, Base
 from .routes import auth, generation
 
-# Create database tables
-models.Base.metadata.create_all(bind=engine)
+load_dotenv()
 
-app = FastAPI(
-    title="Eqori AI Marketing Suite API",
-    description="AI-Powered E-commerce Product Description & Marketing Suite",
-    version="1.0.0"
-)
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Eqori AI Marketing Suite", version="1.0.0")
 
 # Configure CORS
+origins = [
+    "http://localhost:3000",  # React dev server
+    "http://localhost:80",    # Local production
+    "https://*.onrender.com", # Render domains
+]
+
+# Allow all origins for development/demo purposes
+# In production, specify exact origins above
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # React dev server
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
-app.include_router(generation.router, prefix="/api", tags=["generation"])
+app.include_router(auth.router)
+app.include_router(generation.router)
 
 @app.get("/")
-def read_root():
+async def root():
     return {"message": "Welcome to Eqori AI Marketing Suite API"}
 
 @app.get("/health")
-def health_check():
-    return {"status": "healthy"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+async def health_check():
+    return {"status": "healthy", "version": "1.0.0"}

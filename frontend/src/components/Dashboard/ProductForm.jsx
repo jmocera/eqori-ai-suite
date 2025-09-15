@@ -1,244 +1,190 @@
 import React, { useState } from 'react';
+import { generationAPI } from '../../services/api';
 
-const PRODUCT_CATEGORIES = [
-  'Electronics',
-  'Apparel',
-  'Home & Garden',
-  'Health & Beauty',
-  'Sports & Fitness',
-  'Books & Media',
-  'Toys & Games',
-  'Automotive',
-  'Food & Beverages',
-  'Pet Supplies',
-  'Office Supplies',
-  'Jewelry & Accessories',
-  'Other'
-];
-
-const TONE_OPTIONS = [
-  'Professional',
-  'Playful', 
-  'Luxury',
-  'Informative'
-];
-
-const ProductForm = ({ onSubmit, loading }) => {
+const ProductForm = ({ onGenerationComplete }) => {
   const [formData, setFormData] = useState({
     product_name: '',
-    product_category: '',
-    input_features: '',
-    input_audience: '',
-    input_tone: '',
-    input_keywords: '',
+    category: '',
+    features: '',
+    target_audience: '',
+    tone_of_voice: '',
+    seo_keywords: ''
   });
-
-  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.product_name.trim()) {
-      newErrors.product_name = 'Product name is required';
-    }
-
-    if (!formData.product_category) {
-      newErrors.product_category = 'Product category is required';
-    }
-
-    if (!formData.input_features.trim()) {
-      newErrors.input_features = 'Product features are required';
-    }
-
-    if (!formData.input_audience.trim()) {
-      newErrors.input_audience = 'Target audience is required';
-    }
-
-    if (!formData.input_tone) {
-      newErrors.input_tone = 'Tone of voice is required';
-    }
-
-    if (!formData.input_keywords.trim()) {
-      newErrors.input_keywords = 'Keywords are required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (validateForm()) {
-      onSubmit(formData);
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await generationAPI.generateContent(formData);
+      onGenerationComplete(response.data);
+
+      // Reset form
+      setFormData({
+        product_name: '',
+        category: '',
+        features: '',
+        target_audience: '',
+        tone_of_voice: '',
+        seo_keywords: ''
+      });
+    } catch (error) {
+      console.error('Generation error:', error);
+      setError(error.response?.data?.detail || 'Failed to generate content');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title">Product Information</h2>
-        <p className="card-description">
-          Fill in your product details to generate AI-powered marketing content
-        </p>
-      </div>
+    <div className="form-container">
+      <h3 className="text-center mb-4">Generate AI Marketing Content</h3>
+
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
+        <div className="mb-3">
           <label htmlFor="product_name" className="form-label">
             Product Name *
           </label>
           <input
             type="text"
+            className="form-control"
             id="product_name"
             name="product_name"
             value={formData.product_name}
             onChange={handleChange}
-            className="form-input"
-            placeholder="e.g., Wireless Noise-Canceling Headphones"
-            disabled={loading}
+            required
+            placeholder="e.g., Wireless Bluetooth Headphones"
           />
-          {errors.product_name && (
-            <div className="form-error">{errors.product_name}</div>
-          )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="product_category" className="form-label">
-            Product Category *
+        <div className="mb-3">
+          <label htmlFor="category" className="form-label">
+            Product Category
           </label>
           <select
-            id="product_category"
-            name="product_category"
-            value={formData.product_category}
+            className="form-control"
+            id="category"
+            name="category"
+            value={formData.category}
             onChange={handleChange}
-            className="form-select"
-            disabled={loading}
           >
-            <option value="">Select a category...</option>
-            {PRODUCT_CATEGORIES.map(category => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
+            <option value="">Select Category</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Home & Garden">Home & Garden</option>
+            <option value="Health & Beauty">Health & Beauty</option>
+            <option value="Sports & Outdoors">Sports & Outdoors</option>
+            <option value="Books & Media">Books & Media</option>
+            <option value="Toys & Games">Toys & Games</option>
+            <option value="Food & Beverages">Food & Beverages</option>
+            <option value="Other">Other</option>
           </select>
-          {errors.product_category && (
-            <div className="form-error">{errors.product_category}</div>
-          )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="input_features" className="form-label">
-            Key Features & Benefits *
+        <div className="mb-3">
+          <label htmlFor="features" className="form-label">
+            Key Features
           </label>
           <textarea
-            id="input_features"
-            name="input_features"
-            value={formData.input_features}
+            className="form-control"
+            id="features"
+            name="features"
+            value={formData.features}
             onChange={handleChange}
-            className="form-textarea"
-            placeholder="e.g., Waterproof, 40-hour battery life, Noise-canceling, Bluetooth 5.0"
-            rows={4}
-            disabled={loading}
+            rows="3"
+            placeholder="List the main features and benefits of your product"
           />
-          {errors.input_features && (
-            <div className="form-error">{errors.input_features}</div>
-          )}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="input_audience" className="form-label">
-            Target Audience *
+        <div className="row">
+          <div className="col-md-6">
+            <div className="mb-3">
+              <label htmlFor="target_audience" className="form-label">
+                Target Audience
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="target_audience"
+                name="target_audience"
+                value={formData.target_audience}
+                onChange={handleChange}
+                placeholder="e.g., Young professionals, Fitness enthusiasts"
+              />
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="mb-3">
+              <label htmlFor="tone_of_voice" className="form-label">
+                Tone of Voice
+              </label>
+              <select
+                className="form-control"
+                id="tone_of_voice"
+                name="tone_of_voice"
+                value={formData.tone_of_voice}
+                onChange={handleChange}
+              >
+                <option value="">Select Tone</option>
+                <option value="Professional">Professional</option>
+                <option value="Casual">Casual</option>
+                <option value="Friendly">Friendly</option>
+                <option value="Luxury">Luxury</option>
+                <option value="Energetic">Energetic</option>
+                <option value="Authoritative">Authoritative</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="seo_keywords" className="form-label">
+            SEO Keywords
           </label>
           <input
             type="text"
-            id="input_audience"
-            name="input_audience"
-            value={formData.input_audience}
+            className="form-control"
+            id="seo_keywords"
+            name="seo_keywords"
+            value={formData.seo_keywords}
             onChange={handleChange}
-            className="form-input"
-            placeholder="e.g., Gamers, Athletes, Students, Professionals"
-            disabled={loading}
+            placeholder="e.g., bluetooth headphones, wireless audio, noise cancelling"
           />
-          {errors.input_audience && (
-            <div className="form-error">{errors.input_audience}</div>
-          )}
+          <small className="text-muted">Separate keywords with commas</small>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="input_tone" className="form-label">
-            Tone of Voice *
-          </label>
-          <select
-            id="input_tone"
-            name="input_tone"
-            value={formData.input_tone}
-            onChange={handleChange}
-            className="form-select"
+        <div className="d-grid">
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg"
             disabled={loading}
           >
-            <option value="">Select a tone...</option>
-            {TONE_OPTIONS.map(tone => (
-              <option key={tone} value={tone}>
-                {tone}
-              </option>
-            ))}
-          </select>
-          {errors.input_tone && (
-            <div className="form-error">{errors.input_tone}</div>
-          )}
+            {loading ? (
+              <>
+                <span className="loading-spinner me-2"></span>
+                Generating Content...
+              </>
+            ) : (
+              'Generate Marketing Content'
+            )}
+          </button>
         </div>
-
-        <div className="form-group">
-          <label htmlFor="input_keywords" className="form-label">
-            SEO Keywords *
-          </label>
-          <input
-            type="text"
-            id="input_keywords"
-            name="input_keywords"
-            value={formData.input_keywords}
-            onChange={handleChange}
-            className="form-input"
-            placeholder="e.g., wireless headphones, best for travel, noise cancelling"
-            disabled={loading}
-          />
-          {errors.input_keywords && (
-            <div className="form-error">{errors.input_keywords}</div>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn btn-primary"
-          style={{ width: '100%' }}
-        >
-          {loading ? (
-            <>
-              <span className="spinner"></span>
-              Generating Content...
-            </>
-          ) : (
-            'Generate Marketing Content'
-          )}
-        </button>
       </form>
     </div>
   );

@@ -4,79 +4,64 @@ import GeneratedContent from '../components/Dashboard/GeneratedContent';
 import { generationAPI } from '../services/api';
 
 const Dashboard = () => {
-  const [generatedContent, setGeneratedContent] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [currentGeneration, setCurrentGeneration] = useState(null);
+  const [showForm, setShowForm] = useState(true);
 
-  const handleFormSubmit = async (productData) => {
-    setLoading(true);
-    setError(null);
-    
+  const handleGenerationComplete = (generationData) => {
+    setCurrentGeneration(generationData);
+    setShowForm(false);
+  };
+
+  const handleFavoriteToggle = async (generationId) => {
     try {
-      const result = await generationAPI.generateContent(productData);
-      setGeneratedContent(result);
+      const updatedGeneration = await generationAPI.updateGeneration(generationId, {
+        is_favorited: !currentGeneration.is_favorited
+      });
+      setCurrentGeneration(updatedGeneration.data);
     } catch (error) {
-      setError('Failed to generate content. Please try again.');
-      console.error('Generation failed:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error updating favorite:', error);
+      alert('Failed to update favorite status');
     }
   };
 
-  const handleContentUpdate = (updatedContent) => {
-    setGeneratedContent(updatedContent);
-  };
-
   const handleNewGeneration = () => {
-    setGeneratedContent(null);
-    setError(null);
+    setCurrentGeneration(null);
+    setShowForm(true);
   };
 
   return (
-    <div className="container">
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.5rem' }}>
-          Content Generator
-        </h1>
-        <p style={{ color: '#64748b' }}>
-          Create AI-powered marketing content for your products
-        </p>
-      </div>
-
-      {error && (
-        <div style={{
-          backgroundColor: '#fef2f2',
-          border: '1px solid #fecaca',
-          borderRadius: '0.375rem',
-          padding: '1rem',
-          marginBottom: '2rem',
-          color: '#dc2626'
-        }}>
-          {error}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
-        {!generatedContent ? (
-          <ProductForm onSubmit={handleFormSubmit} loading={loading} />
-        ) : (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0 }}>Your Generated Content</h2>
+    <div className="container mt-4">
+      <div className="row">
+        <div className="col-12">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2>Dashboard</h2>
+            {currentGeneration && (
               <button
+                className="btn btn-outline-primary"
                 onClick={handleNewGeneration}
-                className="btn btn-primary"
               >
                 Generate New Content
               </button>
+            )}
+          </div>
+
+          {showForm ? (
+            <div className="row justify-content-center">
+              <div className="col-lg-8">
+                <ProductForm onGenerationComplete={handleGenerationComplete} />
+              </div>
             </div>
-            
-            <GeneratedContent 
-              content={generatedContent} 
-              onUpdate={handleContentUpdate}
-            />
-          </>
-        )}
+          ) : (
+            <div className="row">
+              <div className="col-12">
+                <GeneratedContent
+                  generationData={currentGeneration}
+                  onFavorite={handleFavoriteToggle}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

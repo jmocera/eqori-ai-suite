@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -9,10 +9,10 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,12 +23,13 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle auth errors
+// Add response interceptor to handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -37,56 +38,27 @@ api.interceptors.response.use(
 
 // Auth API calls
 export const authAPI = {
-  register: async (email, password) => {
-    const response = await api.post('/auth/register', { email, password });
-    return response.data;
-  },
-
-  login: async (email, password) => {
-    const formData = new FormData();
-    formData.append('username', email);
-    formData.append('password', password);
-    
-    const response = await api.post('/auth/login', formData, {
+  register: (userData) => api.post('/auth/register', userData),
+  login: (formData) => {
+    const data = new FormData();
+    data.append('username', formData.username);
+    data.append('password', formData.password);
+    return api.post('/auth/login', data, {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
   },
-
-  getCurrentUser: async () => {
-    const response = await api.get('/auth/me');
-    return response.data;
-  },
+  getCurrentUser: () => api.get('/auth/me'),
 };
 
 // Generation API calls
 export const generationAPI = {
-  generateContent: async (productData) => {
-    const response = await api.post('/generate', productData);
-    return response.data;
-  },
-
-  getGenerations: async (skip = 0, limit = 50) => {
-    const response = await api.get(`/generations?skip=${skip}&limit=${limit}`);
-    return response.data;
-  },
-
-  getGeneration: async (id) => {
-    const response = await api.get(`/generations/${id}`);
-    return response.data;
-  },
-
-  updateGeneration: async (id, updates) => {
-    const response = await api.put(`/generations/${id}`, updates);
-    return response.data;
-  },
-
-  deleteGeneration: async (id) => {
-    const response = await api.delete(`/generations/${id}`);
-    return response.data;
-  },
+  generateContent: (generationData) => api.post('/generation/generate', generationData),
+  getHistory: () => api.get('/generation/history'),
+  getGeneration: (id) => api.get(`/generation/${id}`),
+  updateGeneration: (id, updateData) => api.put(`/generation/${id}`, updateData),
+  deleteGeneration: (id) => api.delete(`/generation/${id}`),
 };
 
 export default api;

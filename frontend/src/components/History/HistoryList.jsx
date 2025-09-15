@@ -4,174 +4,152 @@ import { generationAPI } from '../../services/api';
 const HistoryList = ({ onSelectGeneration }) => {
   const [generations, setGenerations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all', 'favorites'
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchGenerations();
+    fetchHistory();
   }, []);
 
-  const fetchGenerations = async () => {
+  const fetchHistory = async () => {
     try {
-      setLoading(true);
-      const data = await generationAPI.getGenerations();
-      setGenerations(data);
+      const response = await generationAPI.getHistory();
+      setGenerations(response.data);
     } catch (error) {
-      setError('Failed to fetch generation history');
-      console.error('Failed to fetch generations:', error);
+      console.error('Error fetching history:', error);
+      setError('Failed to load generation history');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleFavorite = async (generationId, currentFavorite) => {
+  const toggleFavorite = async (id, currentStatus) => {
     try {
-      const updatedGeneration = await generationAPI.updateGeneration(
-        generationId,
-        { is_favorite: !currentFavorite }
-      );
-      
-      setGenerations(prev =>
-        prev.map(gen =>
-          gen.id === generationId ? updatedGeneration : gen
-        )
-      );
+      await generationAPI.updateGeneration(id, { is_favorited: !currentStatus });
+      setGenerations(generations.map(gen =>
+        gen.id === id ? { ...gen, is_favorited: !currentStatus } : gen
+      ));
     } catch (error) {
-      console.error('Failed to update favorite:', error);
+      console.error('Error updating favorite:', error);
+      alert('Failed to update favorite status');
     }
   };
 
-  const handleDelete = async (generationId) => {
+  const deleteGeneration = async (id) => {
     if (window.confirm('Are you sure you want to delete this generation?')) {
       try {
-        await generationAPI.deleteGeneration(generationId);
-        setGenerations(prev => prev.filter(gen => gen.id !== generationId));
+        await generationAPI.deleteGeneration(id);
+        setGenerations(generations.filter(gen => gen.id !== id));
       } catch (error) {
-        console.error('Failed to delete generation:', error);
+        console.error('Error deleting generation:', error);
+        alert('Failed to delete generation');
       }
     }
   };
 
-  const filteredGenerations = generations.filter(gen => {
-    if (filter === 'favorites') {
-      return gen.is_favorite;
-    }
-    return true;
-  });
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const truncateText = (text, maxLength = 100) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
 
   if (loading) {
     return (
-      <div className="card">
-        <div className="loading">
-          <span className="spinner"></span>
-          Loading your content history...
-        </div>
+      <div className="text-center py-4">
+        <div className="loading-spinner mx-auto"></div>
+        <p className="mt-2">Loading your generation history...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="card">
-        <div className="text-center" style={{ color: '#ef4444' }}>
-          {error}
-        </div>
+      <div className="alert alert-danger" role="alert">
+        {error}
+      </div>
+    );
+  }
+
+  if (generations.length === 0) {
+    return (
+      <div className="text-center py-5">
+        <h5>No generations yet</h5>
+        <p className="text-muted">Create your first AI-generated marketing content from the Dashboard!</p>
       </div>
     );
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title">Content History</h2>
-        <p className="card-description">
-          View and manage your previously generated marketing content
-        </p>
-      </div>
+    <div>
+      <h3 className="mb-4">Your Generation History</h3>
 
-      {/* Filter Controls */}
-      <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem' }}>
-        <button
-          onClick={() => setFilter('all')}
-          className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-        >
-          All ({generations.length})
-        </button>
-        <button
-          onClick={() => setFilter('favorites')}
-          className={`btn ${filter === 'favorites' ? 'btn-primary' : 'btn-secondary'}`}
-        >
-          Favorites ({generations.filter(g => g.is_favorite).length})
-        </button>
-      </div>
+      {generations.map((generation) => (
+        <div key={generation.id} className="history-item">
+          <div className="row">
+            <div className="col-md-8">
+              <h5 className="mb-2">
+                {generation.product_name}
+                {generation.is_favorited && (
+                  <span className="text-warning ms-2" title="Favorited">★</span>
+                )}
+              </h5>
 
-      {filteredGenerations.length === 0 ? (
-        <div className="text-center" style={{ padding: '2rem', color: '#64748b' }}>
-          {filter === 'favorites' 
-            ? "You haven't marked any content as favorites yet."
-            : "No content generated yet. Start by creating your first marketing content!"
-          }
-        </div>
-      ) : (
-        <div>
-          {filteredGenerations.map((generation) => (
-            <div key={generation.id} className="generation-card">
-              <div className="generation-header">
-                <div className="generation-meta">
-                  <h3 className="generation-title">{generation.product_name}</h3>
-                  <div className="generation-date">
-                    {new Date(generation.created_at).toLocaleDateString()} • {generation.product_category}
-                  </div>
-                  <div style={{ marginTop: '0.5rem', color: '#64748b', fontSize: '0.875rem' }}>
-                    Target: {generation.input_audience} • Tone: {generation.input_tone}
-                  </div>
-                </div>
-                
-                <div className="generation-actions">
-                  <button
-                    onClick={() => handleToggleFavorite(generation.id, generation.is_favorite)}
-                    className={`favorite-btn ${generation.is_favorite ? 'active' : ''}`}
-                    title={generation.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
-                  >
-                    {generation.is_favorite ? '★' : '☆'}
-                  </button>
-                  
-                  <button
-                    onClick={() => onSelectGeneration(generation)}
-                    className="btn btn-primary"
-                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                  >
-                    View
-                  </button>
-                  
-                  <button
-                    onClick={() => handleDelete(generation.id)}
-                    className="btn btn-danger"
-                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                  >
-                    Delete
-                  </button>
-                </div>
+              <div className="mb-2">
+                {generation.category && (
+                  <span className="badge bg-secondary me-2">{generation.category}</span>
+                )}
+                {generation.target_audience && (
+                  <span className="badge bg-info me-2">{generation.target_audience}</span>
+                )}
+                {generation.tone_of_voice && (
+                  <span className="badge bg-success">{generation.tone_of_voice}</span>
+                )}
               </div>
-              
-              {/* Preview of content */}
-              <div style={{ marginTop: '1rem' }}>
-                <div style={{ 
-                  backgroundColor: '#f8fafc', 
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '0.375rem',
-                  padding: '1rem',
-                  fontSize: '0.875rem',
-                  color: '#64748b'
-                }}>
-                  <strong>Preview:</strong> {generation.generated_description.substring(0, 150)}
-                  {generation.generated_description.length > 150 ? '...' : ''}
-                </div>
+
+              <p className="text-muted mb-2">
+                {truncateText(generation.product_description)}
+              </p>
+
+              <small className="text-muted">
+                Generated on {formatDate(generation.created_at)}
+              </small>
+            </div>
+
+            <div className="col-md-4 text-end">
+              <div className="btn-group-vertical" role="group">
+                <button
+                  className="btn btn-sm btn-primary mb-2"
+                  onClick={() => onSelectGeneration && onSelectGeneration(generation)}
+                >
+                  View Details
+                </button>
+
+                <button
+                  className="btn btn-sm btn-outline-warning mb-2"
+                  onClick={() => toggleFavorite(generation.id, generation.is_favorited)}
+                >
+                  {generation.is_favorited ? 'Remove Favorite' : 'Add Favorite'}
+                </button>
+
+                <button
+                  className="btn btn-sm btn-outline-danger"
+                  onClick={() => deleteGeneration(generation.id)}
+                >
+                  Delete
+                </button>
               </div>
             </div>
-          ))}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 };
