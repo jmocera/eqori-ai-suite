@@ -18,6 +18,7 @@ app = FastAPI(title="Eqori AI Marketing Suite", version="1.0.0")
 origins = [
     "http://localhost:3000",  # React dev server
     "http://localhost:80",    # Local production
+    "https://eqori-frontend.onrender.com",  # Production frontend
     "https://*.onrender.com", # Render domains
 ]
 
@@ -27,7 +28,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
