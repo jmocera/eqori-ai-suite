@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 from .database import engine, Base
-from .routes import auth, generation
+from .routes import auth, generation, blog
 
 load_dotenv()
 
@@ -34,6 +34,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router)
 app.include_router(generation.router)
+app.include_router(blog.router)
 
 @app.get("/")
 async def root():

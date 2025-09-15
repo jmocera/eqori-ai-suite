@@ -9,6 +9,9 @@ import Header from './components/Layout/Header';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import History from './pages/History';
+import Analytics from './pages/Analytics';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 
@@ -50,6 +53,8 @@ function AppContent() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route
             path="/login"
             element={
@@ -81,6 +86,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <History />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
               </ProtectedRoute>
             }
           />

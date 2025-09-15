@@ -14,6 +14,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     generations = relationship("Generation", back_populates="user")
+    blog_posts = relationship("BlogPost", back_populates="user")
 
 class Generation(Base):
     __tablename__ = "generations"
@@ -34,3 +35,25 @@ class Generation(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("User", back_populates="generations")
+
+class BlogPost(Base):
+    __tablename__ = "blog_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    content = Column(Text, nullable=False)
+    excerpt = Column(Text)
+    meta_description = Column(String)
+    keywords = Column(Text)
+    category = Column(String)
+    tags = Column(Text)
+    featured_image_url = Column(String)
+    is_published = Column(Boolean, default=True)
+    view_count = Column(Integer, default=0)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    published_at = Column(DateTime(timezone=True))
+
+    user = relationship("User", back_populates="blog_posts")

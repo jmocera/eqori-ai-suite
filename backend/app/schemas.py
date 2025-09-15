@@ -60,3 +60,55 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+class BlogPostBase(BaseModel):
+    title: str
+    content: str
+    excerpt: Optional[str] = None
+    meta_description: Optional[str] = None
+    keywords: Optional[str] = None
+    category: Optional[str] = None
+    tags: Optional[str] = None
+    featured_image_url: Optional[str] = None
+
+class BlogPostCreate(BlogPostBase):
+    slug: Optional[str] = None
+
+class BlogPostUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    excerpt: Optional[str] = None
+    meta_description: Optional[str] = None
+    keywords: Optional[str] = None
+    category: Optional[str] = None
+    tags: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    is_published: Optional[bool] = None
+
+class BlogPost(BlogPostBase):
+    id: int
+    slug: str
+    is_published: bool
+    view_count: int
+    user_id: Optional[int] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class BlogPostPublic(BaseModel):
+    id: int
+    title: str
+    slug: str
+    excerpt: Optional[str] = None
+    category: Optional[str] = None
+    tags: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    view_count: int
+    created_at: datetime
+    published_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

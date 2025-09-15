@@ -29,6 +29,11 @@ const Header = () => {
 
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto">
+            <li className="nav-item">
+              <Link className="nav-link" to="/blog">
+                Blog
+              </Link>
+            </li>
             {user && (
               <>
                 <li className="nav-item">
@@ -39,6 +44,11 @@ const Header = () => {
                 <li className="nav-item">
                   <Link className="nav-link" to="/history">
                     History
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/analytics">
+                    Analytics
                   </Link>
                 </li>
               </>

@@ -25,6 +25,30 @@ const GeneratedContent = ({ generationData, onSave, onFavorite }) => {
     }
   };
 
+  const shareOnSocial = (platform, content, type) => {
+    const title = `Check out this AI-generated ${type} for "${generationData.product_name}"`;
+    const text = `${title}\n\n${content.substring(0, 200)}...`;
+    const url = window.location.href;
+
+    let shareUrl = '';
+
+    switch (platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
+        break;
+      default:
+        return;
+    }
+
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+  };
+
   return (
     <div className="generation-result">
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -44,12 +68,49 @@ const GeneratedContent = ({ generationData, onSave, onFavorite }) => {
       <div className="content-section">
         <div className="d-flex justify-content-between align-items-center mb-2">
           <h5 className="text-primary">SEO-Optimized Product Description</h5>
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            onClick={() => copyToClipboard(generationData.product_description)}
-          >
-            Copy
-          </button>
+          <div>
+            <div className="btn-group" role="group">
+              <button
+                className="btn btn-sm btn-outline-primary dropdown-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+              >
+                Share
+              </button>
+              <ul className="dropdown-menu">
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => shareOnSocial('twitter', generationData.product_description, 'product description')}
+                  >
+                    <i className="fab fa-twitter"></i> Twitter
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => shareOnSocial('linkedin', generationData.product_description, 'product description')}
+                  >
+                    <i className="fab fa-linkedin"></i> LinkedIn
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => shareOnSocial('facebook', generationData.product_description, 'product description')}
+                  >
+                    <i className="fab fa-facebook"></i> Facebook
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <button
+              className="btn btn-sm btn-outline-secondary ms-2"
+              onClick={() => copyToClipboard(generationData.product_description)}
+            >
+              Copy
+            </button>
+          </div>
         </div>
         <p>{formatContent(generationData.product_description)}</p>
       </div>
